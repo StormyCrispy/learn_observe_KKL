@@ -154,6 +154,7 @@ class Learner(pl.LightningModule):
         if self.method == "Autoencoder":
             x = batch  # .to(self.device)
             z_hat, x_hat = self.model(self.method, x)
+            print(self.model.D)
             return z_hat, x_hat
         elif self.method == "T":
             x = batch[:, :self.model.dim_x]  # .to(self.device)
@@ -168,7 +169,7 @@ class Learner(pl.LightningModule):
 
     def train_dataloader(self):
         train_loader = DataLoader(
-            self.training_data, batch_size=self.batch_size, shuffle=True, num_workers=4)
+            self.training_data, batch_size=self.batch_size, shuffle=True, num_workers=0)
         return train_loader
 
     def training_step(self, batch, batch_idx):
@@ -197,7 +198,7 @@ class Learner(pl.LightningModule):
 
     def val_dataloader(self):
         val_dataloader = DataLoader(
-            self.validation_data, batch_size=self.batch_size, shuffle=True, num_workers=4)
+            self.validation_data, batch_size=self.batch_size, shuffle=True, num_workers=0)
         return val_dataloader
 
     def validation_step(self, batch, batch_idx):

@@ -9,7 +9,8 @@ from sklearn.model_selection import train_test_split
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from learn_KKL.lueneber_observer_jointly import LuenbergerObserverJointly
+from learn_KKL.luenberger_observer_jointly import LuenbergerObserverJointly
+from learn_KKL.luenberger_observer import LuenbergerObserver
 from learn_KKL.system import RevDuffing
 from learn_KKL.learner import Learner
 from learn_KKL.utils import generate_mesh
@@ -18,10 +19,12 @@ sb.set_style('whitegrid')
 
 # Generate the data
 system = RevDuffing()
-data = generate_mesh(np.array([[-1., 1.], [-1., 1.]]), 5000, method='LHS')
+data = generate_mesh(np.array([[-1., 1.], [-1., 1.]]), 72000, method='LHS')
 data, val_data = train_test_split(data, test_size=0.3, shuffle=True)
 
 
+# observer = LuenbergerObserver(dim_x=2, dim_y=1, method="Autoencoder", wc=0.2,
+                            #   recon_lambda=0.8)
 observer = LuenbergerObserverJointly(dim_x=2, dim_y=1, method="Autoencoder", wc=0.2,
                               recon_lambda=0.8)
 observer.set_dynamics(system)

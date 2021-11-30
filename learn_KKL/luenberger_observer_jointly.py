@@ -84,9 +84,18 @@ class LuenbergerObserverJointly(LuenbergerObserver):
         # Reconstruction loss MSE(x,x_hat)
         loss_1 = self.recon_lambda * MSE(x, x_hat, dim=dim)
 
+        # Compute gradients of T_u with respect to inputs
+        dTdh = torch.autograd.functional.jacobian(
+            self.encoder, x, create_graph=False, strict=False, vectorize=False)
+        dTdx = torch.transpose(torch.transpose(
+            torch.diagonal(dTdh, dim1=0, dim2=2), 1, 2), 0, 1)
+        lhs = torch.einsum('ijk,ik->ij', dTdx, self.f(x))
+
         D = self.D.to(self.device)
         F = self.F.to(self.device)
 
-        loss_2 = torch.norm(torch.matmul(torch.inverse(D), F))
+        rhs = torch.matmul(torch.inverse(D), F)
+
+        loss_2 = torch.norm(torch.matmul(lhs,rhs))
 
         return loss_1 + loss_2, loss_1, loss_2

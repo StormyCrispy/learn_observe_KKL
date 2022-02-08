@@ -545,3 +545,52 @@ class QuanserQubeServo2(System):
     def __repr__(self):
         return "VanDerPol"
 
+class Unobservable_circle(System):
+    """
+    Attractor with a globally limit-cycle being the unit circle. 
+    x and -x are undistinguishable.
+    C1 regularization is implemented
+    """
+
+    def __init__(self,):
+        super().__init__()
+        self.dim_x = 2
+        self.dim_y = 2
+
+        self.u = self.null_controller
+        self.u_1 = self.null_controller
+        self.r_max = 2.
+        self.dist = 8.
+        self.coef = self.set_coef()
+    
+    def set_coef(self):
+        A = torch.tensor([[0,0,0,1],[self.dist**3,self.dist**2,self.dist,1], [0,0,1,0],[3*self.dist**2,2*self.dist,1,0]])
+        B = torch.tensor([[1],[0],[0],[0]])
+        return torch.from_numpy(np.linalg.solve(A,B))
+
+    def P(self,x):
+        """C1 regularization"""
+        return self.coef[0]*x**3+self.coef[1]*x**2+self.coef[2]*x + self.coef[3]
+
+
+    def f(self, x):
+        norme = x[..., 0]**2+x[..., 1]**2
+        ki = torch.where(norme <= self.r_max**2, 1., torch.where(norme<(self.r_max+self.dist)**2, self.P(norme - self.r_max), 0.))
+        xdot = torch.zeros_like(x)
+        xdot[..., 0] = ki*(x[..., 1] + x[..., 0]  - x[..., 0]*(x[..., 0]**2+x[..., 1]**2))
+        xdot[..., 1] = ki*(-x[..., 0] + x[..., 1] - x[..., 1]*(x[..., 0]**2+x[..., 1]**2))
+        return xdot
+
+    def h(self, x):
+        y = torch.zeros_like(x)
+        y[..., 0] = x[..., 0]**2-x[..., 1]**2
+        y[..., 1] =  2*x[..., 0]*x[..., 1]
+        return y
+
+    def g(self, x):
+        xdot = torch.zeros_like(x)
+        xdot[..., -1] = torch.ones_like(x[..., -1])
+        return xdot
+
+    def __repr__(self):
+        return 'Unobservable_circle_v2'
